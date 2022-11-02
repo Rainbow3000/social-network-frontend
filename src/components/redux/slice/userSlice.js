@@ -90,6 +90,10 @@ const userSlice = createSlice({
       localStorage.removeItem("user");
       state.user = null;
       state.isLoading = false;
+      state.userInfo = null;
+      state.userList = [];
+      state._user = null;
+      state._userList = null;
       state.isError = {
         error: false,
         message: null,
@@ -101,19 +105,28 @@ const userSlice = createSlice({
     handleUploadAvatar: (state, action) => {
       state.userInfo = action.payload.userUpdate;
     },
+    resetStateRgs: (state, action) => {
+      state.isError.message = null;
+      state.isError.error = false;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getListUserByUsername.fulfilled, (state, action) => {
       state._userList = action.payload.user;
     });
 
-    builder.addCase(updateAvatarCover.fulfilled,(state,action)=>{
-        state.userInfo = action.payload; 
-    })
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+      state.userInfo = action.payload;
+    });
 
-    builder.addCase(updateUserAvatar.fulfilled,(state,action)=>{
-        state.userInfo = action.payload;
-    })
+    builder.addCase(updateAvatarCover.fulfilled, (state, action) => {
+      state.userInfo = action.payload;
+    });
+
+    builder.addCase(updateUserAvatar.fulfilled, (state, action) => {
+      state.userInfo = action.payload;
+      state.user = {...state.user,avatar:action.payload.user.avatar}
+    });
 
     builder.addCase(userLogin.pending, (state, action) => {
       state.isLoading = true;
@@ -142,6 +155,8 @@ const userSlice = createSlice({
       if (action.payload.success) {
         localStorage.removeItem("user");
         state.user = action.payload;
+        const { userId, avatar, username, ...rest } = action.payload;
+
         state.isLoading = false;
         state.isError.error = false;
         state.isError.message = null;
@@ -166,6 +181,11 @@ const userSlice = createSlice({
 
 // export const {} = userSlice.actions
 
-export const { userLogout,handleUploadAvatar,handleUploadAvatarCover } = userSlice.actions;
+export const {
+  userLogout,
+  handleUploadAvatar,
+  handleUploadAvatarCover,
+  resetStateRgs,
+} = userSlice.actions;
 
 export default userSlice.reducer;

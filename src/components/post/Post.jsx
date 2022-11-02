@@ -5,19 +5,20 @@ import { FaGlobeAmericas } from "react-icons/fa";
 import { TiMessages } from "react-icons/ti";
 import { AiOutlineLike } from "react-icons/ai";
 import { RiShareForwardLine } from "react-icons/ri";
-import { createLike} from "../redux/slice/likeSlice";
+import { createLike } from "../redux/slice/likeSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { BsEmojiSmile } from "react-icons/bs";
 import { BsImages } from "react-icons/bs";
 import EmojiPicker from "emoji-picker-react";
-import {createComment,postDelete} from '../redux/slice/postSlice'
-import {dateConvert} from '../../utils/convertTodate'
-import {BsThreeDots} from 'react-icons/bs'
+import { createComment, postDelete,getChildComment } from "../redux/slice/postSlice";
+import { dateConvert } from "../../utils/convertTodate";
+import { BsThreeDots } from "react-icons/bs";
+import { BsArrowReturnRight } from "react-icons/bs";
 
+import { useEffect } from "react";
 
-
-const Post = ({ postItem, flagBlue}) => {
-  const { isLoading} = useSelector((state) => state.like);
+const Post = ({ postItem, flagBlue }) => {
+  const { isLoading } = useSelector((state) => state.like);
   const [likNumber, setLikNumber] = useState(
     postItem && postItem.post.likeNumber
   );
@@ -25,8 +26,16 @@ const Post = ({ postItem, flagBlue}) => {
     postItem && postItem.post.commentNumber
   );
   const [comments, setComments] = useState("");
+  const [idComment, setIdComment] = useState("");
   const [iconShow, setIconShow] = useState(false);
-  const {user} = useSelector(state=>state.user)
+  const [iconShowChildrent, setIconShowChildrent] = useState(false);
+  const [commentIsResponse, setCommentIsResponse] = useState([]);
+  const { postList } = useSelector((state) => state.post);
+  const { user } = useSelector((state) => state.user);
+  const [childComment,setChildComment] = useState([]); 
+  const containerRef = useRef();
+
+  const commentRef = useRef();
   const dispatch = useDispatch();
   const handleCreateLike = (postId) => {
     if (isLoading) return;
@@ -44,45 +53,89 @@ const Post = ({ postItem, flagBlue}) => {
 
   const handleKeyDown = (e) => {
     if (e.key === 13 || e.key === "Enter") {
-        const data = {
-          postId:postItem.post._id, 
-          content: comments,
-          time:Date.now().toString()
-        }
-        dispatch(createComment(data))
-        setComNumber(prev=>prev + 1); 
-        setComments("")
+      if (comments === "") return;
+      const data = {
+        postId: postItem.post._id,
+        content: comments,
+        time: Date.now().toString(),
+      };
+      dispatch(createComment(data));
+      setComNumber((prev) => prev + 1);
+      setComments("");
     }
   };
 
   const handleShowIcon = () => {
     setIconShow(!iconShow);
   };
+  const handleShowIconChildrent = () => {
+    setIconShowChildrent(true);
+  };
 
-  const onEmojiClick = (object)=>{
-    let text = comments + object.emoji; 
-    setComments(text); 
+  const onEmojiClick = (object) => {
+    let text = comments + object.emoji;
+    setComments(text);
+  };
+
+  const time = dateConvert(postItem.post.time);
+
+  const handleDeletePost = () => {
+    dispatch(postDelete(postItem.post._id));
+  };
+
+  const handleResponseComment = (id) => {
+    setCommentIsResponse([...commentIsResponse, id]);
+    const checkIsClick = commentIsResponse.find((element) => element === id);
+    if (!checkIsClick) {
+      const inputWraper = document.createElement("div");
+      inputWraper.className = "childCommentContainer";
+      const inputElement = document.createElement("input");
+      inputElement.setAttribute("placeholder", "Bình luận của bạn");
+      const avatarUser = document.createElement("img");
+      avatarUser.setAttribute("src", user.avatar);
+      avatarUser.className = "userAvatar";
+      const imgIconSmile = document.createElement("img");
+      imgIconSmile.className = "iconSmile";
+      imgIconSmile.setAttribute(
+        "src",
+        "https://i.pinimg.com/originals/12/ba/72/12ba72f0e3f84c4669cd8734d90ab395.png"
+      );
+      inputWraper.appendChild(avatarUser);
+      inputWraper.appendChild(inputElement);
+      inputWraper.appendChild(imgIconSmile);
+      document.querySelector(`.comment-${id}`).appendChild(inputWraper);
+      inputElement.addEventListener("keydown", (e) => {
+        if (e.key === 13 || e.key === "Enter") {
+          const data = {
+            postId: postItem.post._id,
+            content: e.target.value,
+            parentId:id,
+            time: Date.now().toString(),
+          };
+          dispatch(createComment(data));
+          setComNumber((prev) => prev + 1);
+          inputElement.value = "";
+        }
+      });
+    }
+  };
+
+  const handleGetChildComment = (id)=>{
+       const comment = postItem.comment.find(element=>element._id === id); 
+       setChildComment(comment.child)
   }
-
-  const time = dateConvert(postItem.post.time)
-
-  const handleDeletePost = ()=>{
-     dispatch(postDelete(postItem.post._id))
-  }
-
   return (
     <NewItem>
-      {
-        postItem.post.userId === user.userId && 
+      {postItem.post.userId === user.userId && (
         <div className="post-options">
-          <BsThreeDots/>
+          <BsThreeDots />
           <ul className="threeDot">
             <li>Ẩn bài viết</li>
             <li>Cập nhật quyền</li>
-            <li onClick={handleDeletePost} >Xóa bài viết</li>
+            <li onClick={handleDeletePost}>Xóa bài viết</li>
           </ul>
         </div>
-      }
+      )}
       <NewItemHead>
         <Avatar
           width={50}
@@ -102,19 +155,15 @@ const Post = ({ postItem, flagBlue}) => {
       <Box>
         {postItem.post.image && (
           <a target="_blank" href={postItem.post && postItem.post.image}>
-             <NewItemImage src={postItem.post && postItem.post.image} />
+            <NewItemImage src={postItem.post && postItem.post.image} />
           </a>
         )}
       </Box>
       <Box className="news-count-like">
         <Paragraph>{likNumber} Thích</Paragraph>
         <Box className="news-count-like-right">
+          <Paragraph>{comNumber} Bình luận</Paragraph>
           <Paragraph>
-            {" "}
-            {comNumber} Bình luận
-          </Paragraph>
-          <Paragraph>
-            {" "}
             {postItem.post && postItem.post.shareNumber} Chia sẻ
           </Paragraph>
         </Box>
@@ -141,46 +190,53 @@ const Post = ({ postItem, flagBlue}) => {
       </Box>
       <Box className="news-hr" />
       <Comment>
-        {
-          postItem && postItem.comment && postItem.comment.map(item=>{
-            const time = dateConvert(item.time)
-            return  <OtherComment key={item._id}>
-            <AvatarComment
-              width={50}
-              height={50}
-              src={item.ownUser.avatar}
-            />
-            <Space />
-            <Box>
-              <Box className="comment-content">
-                  <Box style={{fontWeight:"600"}}>{item.ownUser.username}</Box>
-                  <Box>{item.content}</Box>
-              </Box>
-              <Box className="comment-react">
-                <span>Thích</span>
-                <span>Phản hồi</span>
-                <span>{time}</span>
-              </Box>
-            </Box>
-          </OtherComment>
-          })
-        }
-        
-        
+        {postItem &&
+          postItem.comment &&
+          postItem.comment.map((item) => {
+            const time = dateConvert(item.time);
+            return (
+              <OtherComment key={item._id}>
+                <AvatarComment
+                  width={50}
+                  height={50}
+                  src={item.ownUser.avatar}
+                />
+                <Space />
+                <Box className={`other-comment comment-${item._id}`}>
+                  <Box className="comment-content">
+                    <Box style={{ fontWeight: "600" }}>
+                      {item.ownUser.username}
+                    </Box>
+                    <Box>{item.content}</Box>
+                  </Box>
+                  <Box className="comment-react">
+                    <span>Thích</span>
+                    <span onClick={() => handleResponseComment(item._id)}>
+                      Phản hồi
+                    </span>
+                    <span>{time}</span>
+                  </Box>
+                  {item.child?.length > 0 && childComment.length === 0  && (
+                    <div className="list-comment-res" onClick={()=>handleGetChildComment(item._id)}>
+                      <BsArrowReturnRight />{" "}
+                      <span>{item.child?.length} phản hồi</span>
+                    </div>
+                  )}
+                </Box>
+              </OtherComment>
+            );
+          })}
+
         <MyComment>
-          <AvatarComment
-            width={50}
-            height={50}
-            src={user && user.avatar}
-          />
+          <AvatarComment width={50} height={50} src={user && user.avatar} />
           <FormCommemt onSubmit={(e) => e.preventDefault()}>
             {iconShow && (
               <div className="emoji">
-                <EmojiPicker onEmojiClick={onEmojiClick}  />
+                <EmojiPicker onEmojiClick={onEmojiClick} />
               </div>
             )}
             <InputCommemt
-              onClick={()=>setIconShow(false)}
+              onClick={() => setIconShow(false)}
               onKeyDown={handleKeyDown}
               value={comments}
               onChange={(e) => handleComment(e.target.value)}
@@ -197,6 +253,13 @@ const Post = ({ postItem, flagBlue}) => {
   );
 };
 
+
+
+const ListChildComment = styled.div`
+  
+`
+
+
 const Comment = styled.div`
   width: "100%";
 `;
@@ -208,7 +271,7 @@ const FormCommemt = styled.form`
   display: flex;
   position: relative;
   align-items: center;
-  .emoji{
+  .emoji {
     position: absolute;
     bottom: 50px;
   }
@@ -232,12 +295,56 @@ const MyComment = styled.div`
   display: flex;
   align-items: center;
 `;
+
+const MyCommentChildrent = styled.div`
+  display: none;
+  align-items: center;
+`;
+
 const OtherComment = styled.div`
   width: 100%;
   display: flex;
-  align-items: center;
   height: auto;
   margin: 20px 0;
+  position: relative;
+  .other-comment {
+    height: auto;
+    .list-comment-res {
+      display: flex;
+      align-items: center;
+      span:hover {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+  }
+  .userAvatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+  }
+
+  .childCommentContainer {
+    display: flex;
+    align-items: center;
+    width: 50%;
+    margin-top: 5px;
+    .iconSmile {
+      width: 18px;
+      height: 18px;
+      margin-left: 20px;
+      cursor: pointer;
+    }
+    input {
+      height: 40px;
+      border: none;
+      outline: none;
+      background-color: #8080801f;
+      padding-left: 10px;
+      border-radius: 5px;
+      margin-left: 10px;
+    }
+  }
   .comment-react {
     font-size: 12px;
     span {
@@ -263,7 +370,7 @@ const NewItemImage = styled.img`
   width: 100%;
   height: 500px;
   margin-top: 20px;
-  object-fit:cover;
+  object-fit: contain;
 `;
 
 const Space = styled.div`
@@ -288,36 +395,36 @@ const NewItem = styled.div`
   -moz-box-shadow: -1px 1px 5px 5px rgb(176, 168, 168);
   padding: 10px 30px;
   position: relative;
-  .post-options{
+  .post-options {
     position: absolute;
     top: 30px;
     cursor: pointer;
     font-size: 25px;
     right: 20px;
-    &:hover .threeDot{
+    &:hover .threeDot {
       display: flex;
     }
-    .threeDot{
+    .threeDot {
       position: absolute;
       width: 170px;
       font-size: 18px;
       height: 100px;
       border: 1px solid rgb(176, 168, 168);
       border-radius: 5px;
-      background-color: #FFF;
+      background-color: #fff;
       display: flex;
       flex-direction: column;
       z-index: 999;
       justify-content: space-around;
       display: none;
-      
-      li{
+
+      li {
         display: flex;
         justify-content: center;
         align-items: center;
         transition: all 0.5 ease;
         list-style: none;
-        &:hover{
+        &:hover {
           list-style: disc;
           text-decoration: underline;
         }

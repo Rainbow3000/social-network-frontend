@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-
 import { userLogin } from "../redux/slice/userSlice";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -22,10 +21,7 @@ const Login = () => {
     if (userExist) {
       navigate("/home");
     }
-    if (user !== null) {
-      navigate("/home");
-    }
-  }, [user]);
+  }, [user && user.userId, navigate]);
 
   const onSubmit = ({ email, password }) => {
     if (!errors.email && !errors.message) {
@@ -63,15 +59,20 @@ const Login = () => {
               placeholder="Email của bạn"
             />
 
-            <span style={{color:"red",marginTop:"20px"}}>
-              {errors.password?.type === "required" && "(*) Mật khẩu không được để trống"}
+            <span style={{ color: "red", marginTop: "20px" }}>
+              {errors.password?.type === "required" &&
+                "(*) Mật khẩu không được để trống"}
             </span>
-            <span style={{color:"red"}}>
+            <span style={{ color: "red" }}>
               {errors.password?.type === "minLength" &&
                 "(*) Độ dài mật khẩu phải lớn hơn 8 kí tự"}
             </span>
-            
-            <span style={{color:"red"}}>{isError.message && isError.message === "password incorrect !" && "Mật khẩu không chính xác !"}</span>           
+
+            <span style={{ color: "red" }}>
+              {isError.message &&
+                isError.message === "password incorrect !" &&
+                "Mật khẩu không chính xác !"}
+            </span>
             <Input
               style={{
                 border: errors.password && "1px solid red",
@@ -86,13 +87,16 @@ const Login = () => {
             >
               Đăng nhập
             </Button>
-            <Link style={{textDecoration:"underline"}} className="link link-forget-pass" href="#">
+            <Link
+              style={{ textDecoration: "underline" }}
+              className="link link-forget-pass"
+              href="#"
+            >
               Quên mật khẩu ?
             </Link>
             <Hr />
             <span>Hoặc</span>
             <ButtonCreateAccount>
-              
               <Link className="link link-create-account" to="/register">
                 Tạo tài khoản mới
               </Link>
@@ -227,8 +231,10 @@ const Button = styled.button`
 `;
 const ButtonCreateAccount = styled(Button)`
   background-color: #36a420;
-  width: 50%;
+  width: auto;
+  min-width:50%;
   margin-top: 20px;
+  padding: 5px;
 `;
 const Hr = styled.hr`
   width: 90%;

@@ -10,9 +10,14 @@ const FormModel = ({formModelRef,handleHiddenModel,userInfo}) => {
     const [school,setSchool] = useState("")
     const [livePlace,setLivePlace] = useState("")
     const [homeTown,setHomeTown] = useState("")
+    const [errModel,setErrModel] = useState("")
     const dispatch = useDispatch(); 
     const navigate = useNavigate(); 
     const handleUpdateInfoUser = ()=>{
+        if(school === "" && livePlace === "" && homeTown === ""){
+             setErrModel("Không được để trống hết các ô !"); 
+             return; 
+        }
         const data = {
             school,
             livePlace,
@@ -23,12 +28,12 @@ const FormModel = ({formModelRef,handleHiddenModel,userInfo}) => {
         setLivePlace(""); 
         setHomeTown("");
         handleHiddenModel(); 
-        navigate(0); 
     }
 
     return (
     <Container ref={formModelRef}>
         <MdOutlineCancelPresentation className="cancel" onClick={handleHiddenModel}/>
+        <span style={{color:"red"}}>{errModel}</span>
         <Input value={school} type="text" placeholder="Học vấn của bạn" onChange={(e)=>setSchool(e.target.value)}/>
         <Input value={livePlace} type="text" placeholder="Nơi bạn sinh sống" onChange={(e)=>setLivePlace(e.target.value)}/>
         <Input value={homeTown} type="text" placeholder="Quê quán của bạn" onChange={(e)=>setHomeTown(e.target.value)}/>

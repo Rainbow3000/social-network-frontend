@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import {userRegister} from '../redux/slice/userSlice'
+import {userRegister,resetStateRgs} from '../redux/slice/userSlice'
 
 const Register = () => {
   const {
@@ -31,8 +31,9 @@ const Register = () => {
 
   useEffect(()=>{
         if(isError.message === "register success"){
-            alert("Đăng kí tài khoản thành công !")
-            navigate("/");
+          dispatch(resetStateRgs()); 
+          navigate("/"); 
+          alert("Đăng kí tài khoản thành công !");         
             return; 
         }
   },[isError.message])

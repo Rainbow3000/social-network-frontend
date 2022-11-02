@@ -20,7 +20,7 @@ import axios from "axios";
 
 import { createPost } from "../redux/slice/postSlice";
 
-const Home = ({ handleMessagesUser,chatBoxRef }) => {
+const Home = ({ handleMessagesUser,chatBoxRef,handleCloseMessage }) => {
   const socket = useRef();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -58,7 +58,7 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
 
   useEffect(() => {
     if(socket.current){
-      socket.current.emit("user-online",user.userId)
+      socket.current.emit("user-online",user && user.userId)
     }
   }, []);
 
@@ -71,12 +71,12 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
       if(socket.current){
         socket.current.on("server-send-data",(data)=>{
             const {avatar,username,...rest} = data; 
-            dispatch(addMsgToChat(rest))   
             handleMessagesUser({
               _id:data.from, 
               username:data.username,
               avatar:data.avatar
             })
+            dispatch(addMsgToChat(rest))   
         })
       }
   },[])
@@ -149,10 +149,6 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
     }
   };
 
-  const reGetPostList = () => {
-    dispatch(getPostList());
-  };
-
   const handleOnKeyDown = (e)=>{
       if(e.key === 13 || e.key === "Enter"){
         handleCreatePost(); 
@@ -170,7 +166,7 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
     dispatch(getListUser());
     dispatch(getPostList());
     dispatch(getLikeUser());
-  },[user.userId]);
+  },[user && user.userId]);
 
 
   return (
@@ -237,7 +233,7 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
         </FormModelStatusItem>
       </FormModelStatus>
 
-      <Navbar />
+      <Navbar handleCloseMessage={handleCloseMessage} />
       <Body>
         <TaskbarLeft>
           <TaskListLeft>
@@ -303,7 +299,6 @@ const Home = ({ handleMessagesUser,chatBoxRef }) => {
                 });
               return (
                 <Post
-                  reGetPostList={reGetPostList}
                   flagBlue={flagBlue}
                   key={item.post._id}
                   postItem={item}
@@ -853,6 +848,7 @@ const ModelInput = styled.input`
   width: 100%;
   height: 100%;
   padding-left: 20px;
+  font-size: 18px;
   border: none;
   outline: none;
 `;

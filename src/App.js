@@ -8,18 +8,18 @@ import ChatBox from "./components/chatbox/ChatBox";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { chatUser, getMsg } from "./components/redux/slice/chatSlice";
 import { useDispatch, useSelector } from "react-redux";
-import NotFound from "./components/NotFound";
 
 function App() {
   const dispatch = useDispatch();
-
-  const { user } = useSelector((state) => state.user);
-
   const chatBoxRef = useRef();
   const handleMessagesUser = (user) => {
     dispatch(chatUser(user));
     dispatch(getMsg(user._id));
     chatBoxRef.current.style.display = "block";
+  };
+
+  const handleCloseMessage = () => {
+    chatBoxRef.current.style.display = "none";
   };
 
   return (
@@ -30,13 +30,21 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route
             path="/home"
-            element={<Home handleMessagesUser={handleMessagesUser} />}
+            element={
+              <Home
+                handleCloseMessage={handleCloseMessage}
+                handleMessagesUser={handleMessagesUser}
+              />
+            }
           />
           <Route path="/profile/user/:userId" element={<Profile />} />
           <Route path="*" />
         </Routes>
       </BrowserRouter>
-      <ChatBox chatBoxRef={chatBoxRef} />
+      <ChatBox
+        handleMessagesUser={handleMessagesUser}
+        chatBoxRef={chatBoxRef}
+      />
     </Container>
   );
 }

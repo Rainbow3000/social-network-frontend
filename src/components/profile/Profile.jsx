@@ -14,8 +14,8 @@ import { getPostListByUserId } from "../redux/slice/postSlice";
 import { useLocation } from "react-router-dom";
 import Post from "../post/Post";
 import FormModel from "../formmodel/FormModel";
+import { getPostList,getPostListUser } from "../redux/slice/postSlice";
 import axios from "axios";
-
 import {
   getOneUser,
   updateAvatarCover,
@@ -25,20 +25,27 @@ const Profile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation(); 
-  const path = location.pathname.split("/")[3]; 
   const [avatarCover, setAvatarCover] = useState("");
+  const [path,setPath] = useState("")
   const formModelRef = useRef();
   const avatarRef = useRef();
   const [iCoverLoad, setICoverLoad] = useState(false);
-  const { postListUser } = useSelector((state) => state.post);
   const { userInfo,user } = useSelector((state) => state.user);
+  const { postList,postListUser, isLoading, isError } = useSelector((state) => state.post);
+  const { likeList } = useSelector((state) => state.like);
   const fileRef = useRef();
   const [imgPost, setImgPost] = useState("");
-  
+  const [receiveUser,setReceiveUser] = useState(null); 
 
   const handleShowChangeAvatar = () => {
     avatarRef.current.click();
   };
+
+  useEffect(()=>{
+    const _path = location.pathname.split("/")[3]; 
+    setPath(_path);
+    dispatch(getPostListUser(_path))
+  },[location])
 
   const handleUploadImgCover = async (formData) => {
     try {
@@ -77,8 +84,13 @@ const Profile = () => {
   useEffect(() => {
     formModelRef.current.style.display = "none";
     dispatch(getOneUser(path));
-    dispatch(getPostListByUserId(path))
+    const _user = JSON.parse(localStorage.getItem("user")) && JSON.parse(localStorage.getItem("user")).userId; 
+    setReceiveUser(_user); 
   }, [path]);
+
+  useEffect(()=>{
+    dispatch(getPostList())
+  },[])
 
   const handleAvatarCover = () => {
     fileRef.current.click();
@@ -137,7 +149,7 @@ const Profile = () => {
         {userInfo && userInfo.user && (
           <a href={userInfo && userInfo.user.avatarCover}>
             <img
-              className="avatar-cover"
+             className="avatar-cover"
               src={userInfo && userInfo.user.avatarCover}
               alt=""
             />
@@ -331,10 +343,29 @@ const Profile = () => {
               />
             </Box>
           </ProfileRightFeel>
-          {postListUser.post &&
-            postListUser.post.map((item) => {
-              return <Post isProfile key={item._id} postItem={item} />;
+
+
+          {postListUser &&
+            postListUser &&
+            postListUser.map((item) => {
+              const flagBlue =
+                likeList &&
+                likeList.like &&
+                likeList.like.find((element) => {
+                 return  element.postId === item.post._id && element.userId === path
+                });
+              return (
+                <Post
+                  flagBlue={flagBlue}
+                  key={item.post._id}
+                  postItem={item}
+                />
+              );
             })}
+         
+
+
+
         </ProfileRight>
       </MainProfile>
     </Container>
@@ -428,8 +459,9 @@ const ListFriendUser = styled.div`
 `;
 
 const UserAvatar = styled.img`
-  width: 80px;
+  width: 60px;
   height: 60px;
+  object-fit:cover;
   border-radius: 50%;
 `;
 const PostImg = styled.img`
@@ -590,7 +622,7 @@ const CoverImage = styled.div`
     position: absolute;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit:cover;
   }
   // box-shadow: -1px 1px 5px 5px rgb(176, 168, 168);
   .profile-avatar {

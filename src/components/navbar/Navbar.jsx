@@ -2,26 +2,27 @@ import React, { useRef } from "react";
 import styled from "styled-components";
 import { AiOutlineUsergroupAdd, AiOutlineMessage } from "react-icons/ai";
 import { BiBell } from "react-icons/bi";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import {useSelector,useDispatch} from "react-redux"
+import { useSelector, useDispatch } from "react-redux";
 import { HiOutlineHome } from "react-icons/hi";
 import { MdCancelPresentation } from "react-icons/md";
-import {userLogout} from "../redux/slice/userSlice"
-import {ImFilm} from 'react-icons/im'
-import {BsCart4} from 'react-icons/bs'
-import {getListUserByUsername} from '../redux/slice/userSlice'
-const Navbar = () => {
+import { userLogout } from "../redux/slice/userSlice";
+import { ImFilm } from "react-icons/im";
+import { BsCart4 } from "react-icons/bs";
+import { getListUserByUsername } from "../redux/slice/userSlice";
+const Navbar = ({ handleCloseMessage }) => {
   const navigate = useNavigate();
   const accountRef = useRef();
-  const location = useLocation(); 
-  const path = location.pathname.split('/')[1];
-  const dispatch = useDispatch(); 
-  const formRef = useRef(); 
-  const {user,_userList} = useSelector(state=>state.user)
+  const location = useLocation();
+  const path = location.pathname.split("/")[1];
+  const dispatch = useDispatch();
+  const formRef = useRef();
+  const { user, _userList } = useSelector((state) => state.user);
   const handleLogout = () => {
-      dispatch(userLogout());
-      navigate('/') 
+    dispatch(userLogout());
+    handleCloseMessage();
+    navigate("/");
   };
 
   const handleShowAccountSettings = () => {
@@ -32,37 +33,69 @@ const Navbar = () => {
     accountRef.current.style.display = "none";
   };
 
-  const handleInputChange = (e)=>{
-      formRef.current.style.display = "block"
-      dispatch(getListUserByUsername(e.target.value))
+  const handleInputChange = (e) => {
+    formRef.current.style.display = "block";
+    dispatch(getListUserByUsername(e.target.value));
+  };
+
+  const handleOnMouseLeave = () => {
+    formRef.current.style.display = "none";
+  };
+
+  const handleOnMouseEnter = () => {
+    formRef.current.style.display = "block";
+  };
+
+
+  const handleTurnoff = ()=>{
+    formRef.current.style.display = "none";
   }
 
-  const handleOnMouseLeave = ()=>{
-    formRef.current.style.display = "none"
-  }
-
-  const handleOnMouseEnter= ()=>{
-    formRef.current.style.display = "block"
-  }
 
   return (
     <Container>
       <NavbarLeft>
         <Box className="navbar-left">
-          <Logo className="navbar-left-logo">1906</Logo>
+          <Logo className="navbar-left-logo">
+            <span style={{ color: "green" }}>19</span>06
+          </Logo>
           <Brand className="navbar-left-brand">Diary's</Brand>
         </Box>
-        <Form >
-          <Input  onMouseEnter={handleOnMouseEnter} style={{minWidth:"120px"}}  type="text" placeholder="Tìm bạn bè..." onChange={handleInputChange} />
-          <ModelListUser onMouseLeave={handleOnMouseLeave} ref={formRef} >
-              {
-                _userList && _userList.length !== 0 ? _userList.map(item=>{
-                  return <Box key={item._id} className="f_user">
-                      <img width={30} height={30} src= {item.avatar} alt ="" />
+        <Form>
+          <Input
+            onMouseEnter={handleOnMouseEnter}
+            style={{ minWidth: "120px" }}
+            type="text"
+            placeholder="Tìm bạn bè..."
+            onChange={handleInputChange}
+          />
+          <ModelListUser onMouseLeave={handleOnMouseLeave} ref={formRef}>
+            <MdCancelPresentation className="multi" onClick={handleTurnoff}/>
+            {_userList && _userList.length !== 0 ? (
+              _userList.map((item) => {
+                return (
+                  <Link className="link" to={`/profile/user/${item._id}`}>
+                    <Box key={item._id} className="f_user">
+                      <img width={30} height={30} src={item.avatar} alt="" />
                       <span>{item.username}</span>
-                  </Box>
-                }) : <Box style={{width:"100%",height:"100%",display:"flex",justifyContent:'center',alignItems:'center',color:"gray"}} ><span>Kết quả tìm kiếm ...</span></Box>
-              }
+                    </Box>
+                  </Link>
+                );
+              })
+            ) : (
+              <Box
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  color: "gray",
+                }}
+              >
+                <span>Kết quả tìm kiếm ...</span>
+              </Box>
+            )}
           </ModelListUser>
         </Form>
       </NavbarLeft>
@@ -70,17 +103,20 @@ const Navbar = () => {
       <NavbarCenter>
         <Box className="navbar-center-icon-home-container active">
           <Link className="link" to="/home">
-            <HiOutlineHome color = {path === "home" ? "blue" :"gray"} className="navbar-center-icon navbar-center-icon-home" />
+            <HiOutlineHome
+              color={path === "home" ? "blue" : "gray"}
+              className="navbar-center-icon navbar-center-icon-home"
+            />
           </Link>
         </Box>
         <Box className="navbar-center-icon-home-container">
-          <ImFilm  className="navbar-center-icon navbar-center-icon-friend" />
+          <ImFilm className="navbar-center-icon navbar-center-icon-friend" />
         </Box>
         <Box className="navbar-center-icon-home-container">
-          <AiOutlineUsergroupAdd  className="navbar-center-icon navbar-center-icon-friend" />
+          <AiOutlineUsergroupAdd className="navbar-center-icon navbar-center-icon-friend" />
         </Box>
         <Box className="navbar-center-icon-home-container">
-          <BsCart4  className="navbar-center-icon navbar-center-icon-friend" />
+          <BsCart4 className="navbar-center-icon navbar-center-icon-friend" />
         </Box>
       </NavbarCenter>
 
@@ -117,12 +153,20 @@ const ModelListUser = styled.div`
   height: auto;
   display: none;
   position: absolute;
-  background-color: #FFF;
+  background-color: #fff;
   border: 3px solid #80808045;
-  border-radius:5px;
+  border-radius: 5px;
   padding: 20px;
   left: 150px;
-  .f_user{
+  .multi{
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+    font-size: 20px;
+    color:gray
+  }
+  .f_user {
     margin-top: 5px;
     width: 100%;
     display: flex;
@@ -133,15 +177,15 @@ const ModelListUser = styled.div`
     padding: 5px;
     color: white;
     cursor: pointer;
-    &:hover{
+    &:hover {
       background-color: gray;
     }
-    img{
+    img {
       border-radius: 50%;
       margin-right: 10px;
     }
   }
-`
+`;
 
 const NavbarRightAccount = styled.div`
   width: 200px;
@@ -242,7 +286,7 @@ const NavbarRight = styled.div`
     font-size: 25px;
     margin: 0 20px;
     cursor: pointer;
-    &:hover{
+    &:hover {
       color: orangered;
     }
   }
@@ -263,7 +307,7 @@ const NavbarCenter = styled.div`
     font-weight: 100;
     cursor: pointer;
     color: gray;
-    &:hover{
+    &:hover {
       color: orangered;
     }
   }
@@ -273,7 +317,7 @@ const NavbarCenter = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    &:hover{
+    &:hover {
       color: orangered;
     }
   }
